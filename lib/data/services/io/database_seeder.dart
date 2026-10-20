@@ -15,12 +15,33 @@ class DatabaseSeeder {
     final categoryCount = await _isar.categories.count();
 
     if (accountCount > 0 || categoryCount > 0) {
+      await _ensureOtherIncomeCategory();
       return;
     }
 
     await _isar.writeTxn(() async {
       await _seedAccounts();
       await _seedCategories();
+    });
+  }
+
+  Future<void> _ensureOtherIncomeCategory() async {
+    final existing = await _isar.categories
+        .filter()
+        .nameEqualTo('Other')
+        .typeEqualTo(CategoryType.income)
+        .findFirst();
+    if (existing != null) return;
+
+    await _isar.writeTxn(() async {
+      await _isar.categories.put(
+        Category()
+          ..name = 'Other'
+          ..icon = 'wallet'
+          ..colorHex = '#64748B'
+          ..type = CategoryType.income
+          ..isDefault = true,
+      );
     });
   }
 
@@ -73,6 +94,7 @@ class DatabaseSeeder {
       (name: 'Salary', icon: 'briefcase', color: '#10B981'),
       (name: 'Freelance', icon: 'laptop', color: '#14B8A6'),
       (name: 'Investment', icon: 'trending-up', color: '#0EA5E9'),
+      (name: 'Other', icon: 'wallet', color: '#64748B'),
     ];
 
     final categories = <Category>[

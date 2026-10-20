@@ -7,10 +7,28 @@ class DatabaseSeeder {
   Future<void> seedIfEmpty() async {
     final store = MemoryStore.instance;
     if (store.accounts.isNotEmpty || store.categories.isNotEmpty) {
+      _ensureOtherIncomeCategory(store);
       return;
     }
     await _seedAccounts(store);
     await _seedCategories(store);
+  }
+
+  void _ensureOtherIncomeCategory(MemoryStore store) {
+    final exists = store.categories.any(
+      (c) => c.type == CategoryType.income && c.name == 'Other',
+    );
+    if (exists) return;
+
+    store.categories.add(
+      Category()
+        ..id = store.nextCategoryId()
+        ..name = 'Other'
+        ..icon = 'wallet'
+        ..colorHex = '#64748B'
+        ..type = CategoryType.income
+        ..isDefault = true,
+    );
   }
 
   Future<void> _seedAccounts(MemoryStore store) async {
@@ -62,6 +80,7 @@ class DatabaseSeeder {
       (name: 'Salary', icon: 'briefcase', color: '#10B981'),
       (name: 'Freelance', icon: 'laptop', color: '#14B8A6'),
       (name: 'Investment', icon: 'trending-up', color: '#0EA5E9'),
+      (name: 'Other', icon: 'wallet', color: '#64748B'),
     ];
 
     for (final item in expenseDefaults) {
